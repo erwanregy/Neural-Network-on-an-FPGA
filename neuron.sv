@@ -31,7 +31,7 @@ end
 
 // State machine outputs
 
-logic reset_outputs, enable_multiplier, enable_accumulator, enable_activator;
+logic reset_units, enable_multiplier, enable_accumulator, enable_activator;
 
 
 // Multiply
@@ -39,7 +39,7 @@ logic reset_outputs, enable_multiplier, enable_accumulator, enable_activator;
 logic signed [(2*DATA_WIDTH)-1:0] products[NUM_INPUTS];
 
 always_ff @(posedge clock or posedge reset) begin : multiply
-    if (reset || reset_outputs) begin
+    if (reset || reset_units) begin
         foreach (products[i]) begin
             products[i] <= 0;
         end
@@ -60,7 +60,7 @@ end
 logic signed [($clog2(NUM_INPUTS)+2*DATA_WIDTH)-1:0] sum;
 
 always_ff @(posedge clock or posedge reset) begin : accumulate
-    if (reset || reset_outputs) begin
+    if (reset || reset_units) begin
         sum <= 0;
     end else if (enable_accumulator) begin
         foreach (products[i]) begin
@@ -80,7 +80,7 @@ if (ACTIVATION == "sigmoid") begin
 end
 
 always_ff @(posedge clock or posedge reset) begin : activate
-    if (reset || reset_outputs) begin
+    if (reset || reset_units) begin
         out <= 0;
     end else if (enable_activator) begin
         unique case (ACTIVATION)
@@ -115,7 +115,7 @@ always_ff @(posedge clock, posedge reset) begin
 end
 
 always_comb begin
-    reset_outputs = 0;
+    reset_units = 0;
     enable_multiplier = 0;
     enable_accumulator = 0;
     enable_activator = 0;
@@ -123,7 +123,7 @@ always_comb begin
     next_state = present_state;
     unique case (present_state)
         waiting: begin
-            reset_outputs = 1;
+            reset_units = 1;
             if (input_ready) begin
                 next_state = multiplying;
             end else begin
