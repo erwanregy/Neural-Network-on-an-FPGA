@@ -31,7 +31,7 @@ end
 
 // State machine outputs
 
-logic count, reset_accumulator, reset_multipliers;
+logic reset_outputs, enable_multiplier, enable_accumulator, enable_activator;
 
 
 // Multiply
@@ -39,35 +39,18 @@ logic count, reset_accumulator, reset_multipliers;
 logic signed [(2*DATA_WIDTH)-1:0] products[NUM_INPUTS];
 
 always_ff @(posedge clock or posedge reset) begin : multiply
-    if (reset) begin
+    if (reset || reset_outputs) begin
         foreach (products[i]) begin
             products[i] <= 0;
         end
-    end else if (reset_multipliers) begin
-        foreach (products[i]) begin
-            products[i] <= 0;
-        end
-    end else begin
+    end else if (enable_multiplier) begin
         foreach (products[i]) begin
             products[i] <= inputs[i] * weights[i];
         end
-    end
-end
-
-
-// Input number counter
-
-logic [$clog2(NUM_INPUTS)-1:0] input_num;
-
-always_ff @(posedge clock or posedge reset) begin
-    if (reset) begin
-        input_num <= 0;
-    end else if (reset_accumulator) begin
-        input_num <= 0;
-    end else if (count) begin
-        input_num <= input_num + 1;
     end else begin
-        input_num <= input_num;
+        foreach (products[i]) begin
+            products[i] <= products[i];
+        end
     end
 end
 
@@ -77,21 +60,44 @@ end
 logic signed [($clog2(NUM_INPUTS)+2*DATA_WIDTH)-1:0] sum;
 
 always_ff @(posedge clock or posedge reset) begin : accumulate
-    if (reset || reset_accumulator) begin
+    if (reset || reset_outputs) begin
         sum <= 0;
+    end else if (enable_accumulator) begin
+        foreach (products[i]) begin
+            sum <= sum + products[i];
+        end
     end else begin
-        sum <= sum + products[input_num];
+        sum <= sum;
     end
 end
 
 
 // Activate
 
+if (ACTIVATION == "sigmoid") begin
+    // Generate LUT
+    // logic [] sigmoid_rom [];
+end
+
 always_ff @(posedge clock or posedge reset) begin : activate
-    if (reset) begin
+    if (reset || reset_outputs) begin
         out <= 0;
+    end else if (enable_activator) begin
+        unique case (ACTIVATION)
+            "relu": begin
+                out <= (sum > 0) ? sum : 0;
+            end
+            "sigmoid": begin
+                out <= (sum > 0) ? sum : 0;
+                // out <= sigmoid_rom[sum];
+            end
+            default: begin
+                $error("Invalid activation function");
+                out <= sum;
+            end
+        endcase
     end else begin
-        out <= (sum > 0) ? sum : 0;
+        out <= out;
     end
 end
 
@@ -109,15 +115,15 @@ always_ff @(posedge clock, posedge reset) begin
 end
 
 always_comb begin
-    count = 0;
-    reset_accumulator = 0;
-    reset_multipliers = 0;
+    reset_outputs = 0;
+    enable_multiplier = 0;
+    enable_accumulator = 0;
+    enable_activator = 0;
     output_ready = 0;
     next_state = present_state;
     unique case (present_state)
         waiting: begin
-            reset_accumulator = 1;
-            reset_multipliers = 1;
+            reset_outputs = 1;
             if (input_ready) begin
                 next_state = multiplying;
             end else begin
@@ -125,24 +131,20 @@ always_comb begin
             end 
         end
         multiplying: begin
+            enable_multiplier = 1;
             next_state = accumulating;
         end
         accumulating: begin
-            count = 1;
-            if (input_num == NUM_INPUTS - 1) begin
-                next_state = activating;
-            end else if (input_num < NUM_INPUTS) begin
-                next_state = accumulating;
-            end else begin
-                next_state = waiting;
-            end 
+            enable_accumulator = 1;
+            next_state = activating;
         end
         activating: begin
+            enable_activator = 1;
             next_state = done;
         end
         done: begin
             output_ready = 1;
-            next_state = done;
+            next_state = waiting;
         end
         default: begin
             next_state = waiting;
