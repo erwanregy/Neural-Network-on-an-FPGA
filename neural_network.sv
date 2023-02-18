@@ -2,59 +2,67 @@
 
 typedef enum bit {RELU, SIGMOID} activation_type;
 
+typedef struct {
+    int NUM_NEURONS;
+    activation_type ACTIVATION;
+} layer_type;
+
 module neural_network #(parameter
     DATA_WIDTH = 32,
-    NUM_LAYERS = 4,
-    int SIZES[NUM_LAYERS] = {2, 4, 4, 2},
-    bit ACTIVATIONS[NUM_LAYERS-1] = {relu, relu, sigmoid}
+    NUM_INPUTS = 2,
+    layer_type LAYERS = {
+        {4, RELU},
+        {4, RELU},
+        {2, SIGMOID}
+    }
 ) (
     input logic clock, reset, inputs_ready,
-    input logic signed [DATA_WIDTH-1:0] inputs[SIZES[0]],
-    output logic signed [DATA_WIDTH-1:0] outputs[SIZES[NUM_LAYERS-1]],
+    input logic signed [DATA_WIDTH-1:0] inputs[NUM_INPUTS],
+    output logic signed [DATA_WIDTH-1:0] outputs[LAYERS[LAYERS.size()-1].NUM_NEURONS],
     output logic outputs_ready
 );
 
-wire signed [DATA_WIDTH-1:0] connections_0[SIZES[1]];
-wire outputs_ready_0;
+logic signed [DATA_WIDTH-1:0] layer_0_outputs[LAYERS[0].NUM_NEURONS];
+logic layer_0_outputs_ready;
 
 dense_layer #(
    .DATA_WIDTH(DATA_WIDTH),
-   .NUM_INPUTS(SIZES[0]),
-   .NUM_NEURONS(SIZES[1]),
-   .ACTIVATION(ACTIVATIONS[0])
-) hidden_layer_0 (
+   .NUM_INPUTS(NUM_INPUTS),
+   .NUM_NEURONS(LAYERS[0].NUM_NEURONS),
+   .ACTIVATION(LAYERS[0].ACTIVATION)
+) layer_0 (
    .clock(clock), .reset(reset),
-   .inputs_ready(inputss_ready),
+   .inputs_ready(inputs_ready),
    .inputs(inputs),
-   .outputs(connections_0),
-   .outputs_ready(outputs_ready_0)
+   .outputs(layer_0_outputs),
+   .outputs_ready(layer_0_outputs_ready)
 );
 
-wire signed [DATA_WIDTH-1:0] connections_1[SIZES[2]];
-wire outputs_ready_1;
+logic signed [DATA_WIDTH-1:0] layer_1_outputs[LAYERS[1].SIZES];
+logic layer_1_outputs_ready;
 
 dense_layer #(
    .DATA_WIDTH(DATA_WIDTH),
-   .NUM_INPUTS(SIZES[1]),
-   .NUM_NEURONS(SIZES[2]),
-   .ACTIVATION(ACTIVATIONS[1])
-) hidden_layer_1 (
-   .inputs_ready(outputs_ready_0),
+   .NUM_INPUTS(LAYERS[0].NUM_NEURONS),
+   .NUM_NEURONS(LAYERS[1].NUM_NEURONS),
+   .ACTIVATION(LAYERS[1].ACTIVATION)
+) layer_1 (
    .clock(clock), .reset(reset),
-   .inputs(connections_0),
-   .outputs(connections_1),
-   .outputs_ready(outputs_ready_1)
+   .inputs_ready(layer_0_outputs_ready),
+   .inputs(layer_0_outputs),
+   .outputs(layer_1_outputs),
+   .outputs_ready(layer_1_outputs_ready)
 );
 
 dense_layer #(
    .DATA_WIDTH(DATA_WIDTH),
-   .NUM_INPUTS(SIZES[2]),
-   .NUM_NEURONS(SIZES[3]),
-   .ACTIVATION(ACTIVATIONS[2])
+   .NUM_INPUTS(LAYERS[1].NUM_NEURONS),
+   .NUM_NEURONS(LAYERS[2].NUM_NEURONS),
+   .ACTIVATION(LAYERS[2].ACTIVATION)
 ) output_layer (
-   .inputs_ready(outputs_ready_1),
    .clock(clock), .reset(reset),
-   .inputs(connections_1),
+   .inputs_ready(layer_1_outputs_ready),
+   .inputs(layer_1_outputs),
    .outputs(outputs),
    .outputs_ready(outputs_ready)
 );
