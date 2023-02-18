@@ -33,7 +33,7 @@ generate
 endgenerate
 
 always_comb begin
-    output_ready = 1;
+    outputs_ready = 1;
     foreach (output_ready[i]) begin
         if (output_ready[i] != 1) begin
             outputs_ready = 0;
