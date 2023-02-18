@@ -1,12 +1,12 @@
 `timescale 1ns/1ns
 
-typedef enum bool {relu, sigmoid} activation_type;
+typedef enum bit {RELU, SIGMOID} activation_type;
 
 module dense_layer #(parameter
     DATA_WIDTH = 32,
     NUM_INPUTS = 16,
     NUM_NEURONS = 16,
-    ACTIVATION = relu
+    ACTIVATION = RELU
 ) (
     input logic clock, reset, inputs_ready,
     input logic signed [DATA_WIDTH-1:0] inputs[NUM_INPUTS],
