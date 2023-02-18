@@ -1,3 +1,5 @@
+`timescale 1ns/1ns
+
 module neuron #(parameter
     DATA_WIDTH = 32,
     NUM_INPUTS = 16,
@@ -34,7 +36,7 @@ end
 logic reset_units, enable_multiplier, enable_accumulator, enable_activator;
 
 
-// Multiply
+// Multiplier
 
 logic signed [(2*DATA_WIDTH)-1:0] products[NUM_INPUTS];
 
@@ -55,29 +57,69 @@ always_ff @(posedge clock or posedge reset) begin : multiply
 end
 
 
-// Accumulate
+// Input number counter
+
+logic [$clog2(NUM_INPUTS)-1:0] input_num;
+
+always_ff @(posedge clock or posedge reset) begin
+    if (reset) begin
+        input_num <= 0;
+    end else if (reset_units) begin
+        input_num <= 0;
+    end else if (enable_accumulator) begin
+        input_num <= input_num + 1;
+    end else begin
+        input_num <= input_num;
+    end
+end
+
+
+// Accumulator
 
 logic signed [($clog2(NUM_INPUTS)+2*DATA_WIDTH)-1:0] sum;
 
 always_ff @(posedge clock or posedge reset) begin : accumulate
-    if (reset || reset_units) begin
+    if (reset) begin
+        sum <= 0;
+    end else if (reset_units) begin
         sum <= 0;
     end else if (enable_accumulator) begin
-        foreach (products[i]) begin
-            sum <= sum + products[i];
-        end
+        sum <= sum + products[input_num];
     end else begin
         sum <= sum;
     end
 end
 
+// always_ff @(posedge clock or posedge reset) begin : accumulate
+//     if (reset) begin
+//         sum <= 0;
+//     end else if (reset_units) begin
+//         sum <= 0;
+//     end else if (enable_accumulator) begin
+//         foreach (products[i]) begin
+//             sum <= sum + products[i];
+//         end
+//     end else begin
+//         sum <= sum;
+//     end
+// end
 
-// Activate
 
-if (ACTIVATION == "sigmoid") begin
-    // Generate LUT
-    // logic [] sigmoid_rom [];
-end
+// Sigmoid LUT
+
+// generate
+//     if (ACTIVATION == "sigmoid") begin
+//         logic signed [DATA_WIDTH-1:0] sigmoid_rom [2**DATA_WIDTH];
+//         initial begin
+//             foreach (sigmoid_rom[i]) begin
+//                 sigmoid_rom[i] = 1 / (1 + exp(-i));
+//             end
+//         end
+//     end
+// endgenerate
+
+
+// Activator
 
 always_ff @(posedge clock or posedge reset) begin : activate
     if (reset || reset_units) begin
@@ -86,13 +128,11 @@ always_ff @(posedge clock or posedge reset) begin : activate
         unique case (ACTIVATION)
             "relu": begin
                 out <= (sum > 0) ? sum : 0;
-            end
-            "sigmoid": begin
+            end "sigmoid": begin
                 out <= (sum > 0) ? sum : 0;
-                // out <= sigmoid_rom[sum];
-            end
-            default: begin
-                $error("Invalid activation function");
+                //  out <= 1 / (1 + exp(-sum));
+            end default: begin
+                $fatal("Invalid activation function %0s", ACTIVATION);
                 out <= sum;
             end
         endcase
@@ -129,24 +169,23 @@ always_comb begin
             end else begin
                 next_state = waiting;
             end 
-        end
-        multiplying: begin
+        end multiplying: begin
             enable_multiplier = 1;
             next_state = accumulating;
-        end
-        accumulating: begin
+        end accumulating: begin
             enable_accumulator = 1;
-            next_state = activating;
-        end
-        activating: begin
+            if (input_num == NUM_INPUTS-1) begin
+                next_state = activating;
+            end else begin
+                next_state = accumulating;
+            end
+        end activating: begin
             enable_activator = 1;
             next_state = done;
-        end
-        done: begin
+        end done: begin
             output_ready = 1;
             next_state = waiting;
-        end
-        default: begin
+        end default: begin
             next_state = waiting;
         end
     endcase
