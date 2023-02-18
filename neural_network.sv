@@ -1,7 +1,5 @@
 `timescale 1ns/1ns
 
-typedef enum bit {RELU, SIGMOID} activation_type;
-
 typedef struct {
     int NUM_NEURONS;
     activation_type ACTIVATION;
@@ -10,7 +8,7 @@ typedef struct {
 module neural_network #(parameter
     DATA_WIDTH = 32,
     NUM_INPUTS = 2,
-    layer_type LAYERS = {
+    layer_type LAYERS[] = {
         {4, RELU},
         {4, RELU},
         {2, SIGMOID}
@@ -38,7 +36,7 @@ dense_layer #(
    .outputs_ready(layer_0_outputs_ready)
 );
 
-logic signed [DATA_WIDTH-1:0] layer_1_outputs[LAYERS[1].SIZES];
+logic signed [DATA_WIDTH-1:0] layer_1_outputs[LAYERS[1].NUM_NEURONS];
 logic layer_1_outputs_ready;
 
 dense_layer #(

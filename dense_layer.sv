@@ -14,7 +14,7 @@ module dense_layer #(parameter
     output logic outputs_ready
 );
 
-logic output_ready [NUM_NEURONS];
+logic output_ready[NUM_NEURONS];
 
 generate
     for (genvar i = 0; i < NUM_NEURONS; i++) begin
