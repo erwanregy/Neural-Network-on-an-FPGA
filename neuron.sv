@@ -135,7 +135,7 @@ always_ff @(posedge clock or posedge reset) begin : activate
             // end sigmoid: begin
             //     out <= 1 / (1 + exp(-sum));
             end default: begin
-                $fatal("Invalid activation function %0s", ACTIVATION);
+                $fatal("Invalid activation function %0s", ACTIVATION.name());
                 out <= sum;
             end
         endcase
