@@ -6,13 +6,13 @@ module dense_layer #(parameter
     NUM_NEURONS = 16,
     ACTIVATION = "relu"
 ) (
-    input logic clock, reset, input_ready,
+    input logic clock, reset, inputs_ready,
     input logic signed [DATA_WIDTH-1:0] inputs[NUM_INPUTS],
     output logic signed [DATA_WIDTH-1:0] outputs[NUM_NEURONS],
-    output logic output_ready
+    output logic outputs_ready
 );
 
-logic neuron_ready [NUM_NEURONS];
+logic output_ready [NUM_NEURONS];
 
 generate
     for (genvar i = 0; i < NUM_NEURONS; i++) begin
@@ -25,16 +25,16 @@ generate
             .input_ready(input_ready),
             .inputs(inputs),
             .out(outputs[i]),
-            .output_ready(neuron_ready[i])
+            .output_ready(output_ready[i])
         );
     end
 endgenerate
 
 always_comb begin
     output_ready = 1;
-    foreach (neuron_ready[i]) begin
-        if (neuron_ready[i] != 1) begin
-            output_ready = 0;
+    foreach (output_ready[i]) begin
+        if (output_ready[i] != 1) begin
+            outputs_ready = 0;
             break;
         end
     end

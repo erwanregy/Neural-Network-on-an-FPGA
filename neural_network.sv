@@ -15,7 +15,7 @@ module neural_network #(parameter
 );
 
 wire signed [DATA_WIDTH-1:0] connections_0[SIZES[1]];
-wire output_ready_0;
+wire outputs_ready_0;
 
 dense_layer #(
    .DATA_WIDTH(DATA_WIDTH),
@@ -24,14 +24,14 @@ dense_layer #(
    .ACTIVATION(ACTIVATIONS[0])
 ) hidden_layer_0 (
    .clock(clock), .reset(reset),
-   .input_ready(input_ready),
+   .inputs_ready(inputss_ready),
    .inputs(inputs),
    .outputs(connections_0),
-   .output_ready(output_ready_0)
+   .outputs_ready(outputs_ready_0)
 );
 
 wire signed [DATA_WIDTH-1:0] connections_1[SIZES[2]];
-wire output_ready_1;
+wire outputs_ready_1;
 
 dense_layer #(
    .DATA_WIDTH(DATA_WIDTH),
@@ -39,11 +39,11 @@ dense_layer #(
    .NUM_NEURONS(SIZES[2]),
    .ACTIVATION(ACTIVATIONS[1])
 ) hidden_layer_1 (
-   .input_ready(output_ready_0),
+   .inputs_ready(outputs_ready_0),
    .clock(clock), .reset(reset),
    .inputs(connections_0),
    .outputs(connections_1),
-   .output_ready(output_ready_1)
+   .outputs_ready(outputs_ready_1)
 );
 
 dense_layer #(
@@ -52,11 +52,11 @@ dense_layer #(
    .NUM_NEURONS(SIZES[3]),
    .ACTIVATION(ACTIVATIONS[2])
 ) output_layer (
-   .input_ready(output_ready_1),
+   .inputs_ready(outputs_ready_1),
    .clock(clock), .reset(reset),
    .inputs(connections_1),
    .outputs(outputs),
-   .output_ready(output_ready)
+   .outputs_ready(outputs_ready)
 );
 
 endmodule
