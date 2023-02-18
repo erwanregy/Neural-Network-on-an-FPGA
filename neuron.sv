@@ -1,11 +1,11 @@
 `timescale 1ns/1ns
 
-typedef enum bit {RELU, SIGMOID} activation_type;
+typedef enum bit {relu, sigmoid} activation_type;
 
 module neuron #(parameter
     DATA_WIDTH = 32,
     NUM_INPUTS = 16,
-    ACTIVATION = RELU
+    ACTIVATION = relu
 ) (
     input logic clock, reset, input_ready,
     input logic signed [DATA_WIDTH-1:0] inputs[NUM_INPUTS],
@@ -110,7 +110,7 @@ end
 // Sigmoid LUT
 
 // generate
-//     if (ACTIVATION == SIGMOID) begin
+//     if (ACTIVATION == sigmoid) begin
 //         logic signed [DATA_WIDTH-1:0] sigmoid_rom [2**DATA_WIDTH];
 //         initial begin
 //             foreach (sigmoid_rom[i]) begin
@@ -130,9 +130,9 @@ always_ff @(posedge clock or posedge reset) begin : activate
         out <= 0;
     end else if (enable_activator) begin
         unique case (ACTIVATION)
-            RELU: begin
+            relu: begin
                 out <= (sum > 0) ? sum : 0;
-            // end SIGMOID: begin
+            // end sigmoid: begin
             //     out <= 1 / (1 + exp(-sum));
             end default: begin
                 $fatal("Invalid activation function %0s", ACTIVATION.name());
