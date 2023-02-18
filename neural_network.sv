@@ -14,93 +14,49 @@ module neural_network #(parameter
     output logic outputs_ready
 );
 
-logic signed [DATA_WIDTH-1:0] connections[NUM_LAYERS][];
-logic ready[NUM_LAYERS];
+wire signed [DATA_WIDTH-1:0] connections_0[SIZES[1]];
+wire output_ready_0;
 
-initial begin
-    foreach (connections[i]) begin
-        connections[i] = new [SIZES[i]];
-    end
-end
+dense_layer #(
+   .DATA_WIDTH(DATA_WIDTH),
+   .NUM_INPUTS(SIZES[0]),
+   .NUM_NEURONS(SIZES[1]),
+   .ACTIVATION(ACTIVATIONS[0])
+) hidden_layer_0 (
+   .clock(clock), .reset(reset),
+   .input_ready(input_ready),
+   .inputs(inputs),
+   .outputs(connections_0),
+   .output_ready(output_ready_0)
+);
 
-assign connections
+wire signed [DATA_WIDTH-1:0] connections_1[SIZES[2]];
+wire output_ready_1;
 
-generate
-    logic signed [DATA_WIDTH-1:0] prev_layer_outputs;
-    for (genvar i = 1; i < NUM_LAYERS; i++) begin
-        logic signed [DATA_WIDTH-1:0] layer_inputs[SIZES[i-1]], layer_outputs[SIZES[i]];
-        logic layer_inputs_ready, layer_outputs_ready;
-        
-        if (i == 1) begin
-            assign layer_inputs = inputs;
-            assign layer_inputs_ready = inputs_ready;
-        end else if (i < NUM_LAYERS) begin
-            assign layer_inputs = prev_layer_outputs;
-            assign layer_inputs_ready = prev_layer_outputs_ready;
-            if (i == NUM_LAYERS-1) begin
-                assign outputs = layer_outputs;
-                assign outputs_ready = layer_outputs_ready;
-            end
-        end
-        
-        dense_layer #(
-            .DATA_WIDTH(DATA_WIDTH),
-            .NUM_INPUTS(SIZES[i-1]),
-            .NUM_NEURONS(SIZES[i]),
-            .ACTIVATION(ACTIVATIONS[i-1])
-        ) dense_layer (
-            .clock(clock), .reset(reset),
-            .input_ready(layer_inputs_ready),
-            .inputs(layer_inputs),
-            .outputs(layer_outputs),
-            .output_ready(layer_outputs_ready)
-        );
-    end
-endgenerate
+dense_layer #(
+   .DATA_WIDTH(DATA_WIDTH),
+   .NUM_INPUTS(SIZES[1]),
+   .NUM_NEURONS(SIZES[2]),
+   .ACTIVATION(ACTIVATIONS[1])
+) hidden_layer_1 (
+   .input_ready(output_ready_0),
+   .clock(clock), .reset(reset),
+   .inputs(connections_0),
+   .outputs(connections_1),
+   .output_ready(output_ready_1)
+);
 
-//wire signed [DATA_WIDTH-1:0] connections_0[SIZES[1]];
-//wire output_ready_0;
-
-//dense_layer #(
-//    .DATA_WIDTH(DATA_WIDTH),
-//    .NUM_INPUTS(SIZES[0]),
-//    .NUM_NEURONS(SIZES[1]),
-//    .ACTIVATION(ACTIVATIONS[0])
-//) hidden_layer_0 (
-//    .clock(clock), .reset(reset),
-//    .input_ready(input_ready),
-//    .inputs(inputs),
-//    .outputs(connections_0),
-//    .output_ready(output_ready_0)
-//);
-
-//wire signed [DATA_WIDTH-1:0] connections_1[SIZES[2]];
-//wire output_ready_1;
-
-//dense_layer #(
-//    .DATA_WIDTH(DATA_WIDTH),
-//    .NUM_INPUTS(SIZES[1]),
-//    .NUM_NEURONS(SIZES[2]),
-//    .ACTIVATION(ACTIVATIONS[1])
-//) hidden_layer_1 (
-//    .input_ready(output_ready_0),
-//    .clock(clock), .reset(reset),
-//    .inputs(connections_0),
-//    .outputs(connections_1),
-//    .output_ready(output_ready_1)
-//);
-
-//dense_layer #(
-//    .DATA_WIDTH(DATA_WIDTH),
-//    .NUM_INPUTS(SIZES[2]),
-//    .NUM_NEURONS(SIZES[3]),
-//    .ACTIVATION(ACTIVATIONS[2])
-//) output_layer (
-//    .input_ready(output_ready_1),
-//    .clock(clock), .reset(reset),
-//    .inputs(connections_1),
-//    .outputs(outputs),
-//    .output_ready(output_ready)
-//);
+dense_layer #(
+   .DATA_WIDTH(DATA_WIDTH),
+   .NUM_INPUTS(SIZES[2]),
+   .NUM_NEURONS(SIZES[3]),
+   .ACTIVATION(ACTIVATIONS[2])
+) output_layer (
+   .input_ready(output_ready_1),
+   .clock(clock), .reset(reset),
+   .inputs(connections_1),
+   .outputs(outputs),
+   .output_ready(output_ready)
+);
 
 endmodule

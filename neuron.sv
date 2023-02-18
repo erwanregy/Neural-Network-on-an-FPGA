@@ -122,15 +122,16 @@ end
 // Activator
 
 always_ff @(posedge clock or posedge reset) begin : activate
-    if (reset || reset_units) begin
+    if (reset) begin
+        out <= 0;
+    end else if (reset_units) begin
         out <= 0;
     end else if (enable_activator) begin
         unique case (ACTIVATION)
             "relu": begin
                 out <= (sum > 0) ? sum : 0;
-            end "sigmoid": begin
-                out <= (sum > 0) ? sum : 0;
-                //  out <= 1 / (1 + exp(-sum));
+            // end "sigmoid": begin
+            //     out <= 1 / (1 + exp(-sum));
             end default: begin
                 $fatal("Invalid activation function %0s", ACTIVATION);
                 out <= sum;
