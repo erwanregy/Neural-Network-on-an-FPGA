@@ -1,6 +1,6 @@
 `timescale 1ns/1ns
 
-typedef enum bit {relu, sigmoid} activation_type;
+typedef enum bit {RELU, SIGMOID} activation_type;
 
 module neural_network #(parameter
     DATA_WIDTH = 32,
