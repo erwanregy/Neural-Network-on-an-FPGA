@@ -24,7 +24,7 @@ generate
             .ACTIVATION(ACTIVATION)
         ) neuron (
             .clock(clock), .reset(reset),
-            .input_ready(input_ready),
+            .input_ready(inputs_ready),
             .inputs(inputs),
             .out(outputs[i]),
             .output_ready(output_ready[i])
