@@ -1,4 +1,4 @@
-`timescale 1ns/1ns
+`timescale 1ns / 100ps
 
 module neuron #(parameter
     DATA_WIDTH = 32,
