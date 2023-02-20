@@ -3,7 +3,8 @@
 typedef enum {RELU, SIGMOID} ACTIVATION;
 
 module dense_layer #(parameter
-    DATA_WIDTH = 32,
+    INTG_WIDTH = 16,
+    FRAC_WIDTH = 16,
     NUM_INPUTS = 16,
     NUM_NEURONS = 16,
     ACTIVATION = RELU
@@ -14,12 +15,18 @@ module dense_layer #(parameter
     output logic outputs_ready
 );
 
+typedef struct packed {
+    logic signed [INTG_WIDTH-1:0] intg;
+    logic [FRAC_WIDTH-1:0] frac;
+} fixed;
+
 logic [NUM_NEURONS-1:0] neuron_output_ready;
 
 generate
     for (genvar i = 0; i < NUM_NEURONS; i++) begin
         neuron #(
-            .DATA_WIDTH(DATA_WIDTH),
+            .INTG_WIDTH(INTG_WIDTH),
+            .FRAC_WIDTH(FRAC_WIDTH),
             .NUM_INPUTS(NUM_INPUTS),
             .ACTIVATION(ACTIVATION)
         ) neuron (
