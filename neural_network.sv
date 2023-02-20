@@ -1,4 +1,4 @@
-`timescale 1ns/1ns
+`timescale 1ns / 100ps
 
 typedef struct {
     int NUM_NEURONS;
