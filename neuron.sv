@@ -1,3 +1,5 @@
+`timescale 1ns / 100ps
+
 module neuron #(parameter
     DATA_WIDTH = 32,
     NUM_INPUTS = 16,
