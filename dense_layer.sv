@@ -1,6 +1,6 @@
 `timescale 1ns/1ns
 
-typedef enum bit {RELU, SIGMOID} activation_type;
+typedef enum {RELU, SIGMOID} ACTIVATION;
 
 module dense_layer #(parameter
     DATA_WIDTH = 32,

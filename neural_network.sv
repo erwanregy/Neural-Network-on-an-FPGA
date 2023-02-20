@@ -2,21 +2,22 @@
 
 typedef struct {
     int NUM_NEURONS;
-    activation_type ACTIVATION;
-} layer_type;
+    ACTIVATION ACTIVATION;
+} LAYER;
 
 module neural_network #(parameter
     DATA_WIDTH = 32,
-    NUM_INPUTS = 2,
-    layer_type LAYERS[] = {
-        {4, RELU},
-        {4, RELU},
-        {2, SIGMOID}
+    NUM_LAYERS = 3,
+    NUM_INPUTS = 10,
+    LAYER LAYERS[NUM_LAYERS] = '{
+        '{16, RELU},
+        '{16, RELU},
+        '{10, SIGMOID}
     }
 ) (
     input logic clock, reset, inputs_ready,
     input logic signed [DATA_WIDTH-1:0] inputs[NUM_INPUTS],
-    output logic signed [DATA_WIDTH-1:0] outputs[LAYERS[LAYERS.size()-1].NUM_NEURONS],
+    output logic signed [DATA_WIDTH-1:0] outputs[LAYERS[NUM_LAYERS-1].NUM_NEURONS],
     output logic outputs_ready
 );
 
