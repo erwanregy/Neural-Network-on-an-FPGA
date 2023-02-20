@@ -111,15 +111,18 @@ end
 
 // Sigmoid LUT
 
-        logic signed [DATA_WIDTH-1:0] sigmoid[256];
-        initial begin
-            foreach (sigmoid[i]) begin
-                automatic real x = ((i / 256.0) * 16) - 8;
-                automatic real e = 2.71;
-                automatic real y = 1 / (1 + e**(-x));
-                sigmoid[i] = y * 255;
-            end
-        end
+localparam NUM_ENTRIES = 256;
+localparam RANGE = 6;
+
+logic signed [DATA_WIDTH-1:0] sigmoid[NUM_ENTRIES];
+initial begin
+    foreach (sigmoid[i]) begin
+        automatic real x = ((i / NUM_ENTRIES) * (2 * RANGE)) - RANGE;
+        automatic real e = 2.71;
+        automatic real y = 1 / (1 + e**(-x));
+        sigmoid[i] = y * 255;
+    end
+end
 
 
 // Activator
@@ -138,7 +141,14 @@ always_ff @(posedge clock or posedge reset) begin : activate
                     out <= (sum > 0) ? sum : 0;
                 end
             end SIGMOID: begin
-                out <= sigmoid[sum];
+                if (sum > RANGE) begin
+                    out <= 255;
+                end else if (sum < -RANGE) begin
+                    out <= 0;
+                end else begin
+                    out <= sigmoid[sum];
+                end
+                // out <= sigmoid[sum];
             end default: begin
                 $fatal("Invalid activation function %0s", ACTIVATION);
                 out <= sum;
