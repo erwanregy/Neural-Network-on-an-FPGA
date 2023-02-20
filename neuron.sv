@@ -43,7 +43,11 @@ logic reset_units, enable_multiplier, enable_accumulator, enable_activator;
 logic signed [(2*DATA_WIDTH)-1:0] products[NUM_INPUTS];
 
 always_ff @(posedge clock or posedge reset) begin : multiply
-    if (reset || reset_units) begin
+    if (reset) begin
+        foreach (products[i]) begin
+            products[i] <= 0;
+        end
+    end else if (reset_units) begin
         foreach (products[i]) begin
             products[i] <= 0;
         end
