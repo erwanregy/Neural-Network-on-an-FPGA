@@ -14,7 +14,7 @@ module dense_layer #(parameter
     output logic outputs_ready
 );
 
-logic output_ready[NUM_NEURONS];
+logic [NUM_NEURONS-1:0] neuron_output_ready;
 
 generate
     for (genvar i = 0; i < NUM_NEURONS; i++) begin
@@ -27,19 +27,11 @@ generate
             .input_ready(inputs_ready),
             .inputs(inputs),
             .out(outputs[i]),
-            .output_ready(output_ready[i])
+            .output_ready(neuron_output_ready[i])
         );
     end
 endgenerate
 
-always_comb begin
-    outputs_ready = 1;
-    foreach (output_ready[i]) begin
-        if (output_ready[i] != 1) begin
-            outputs_ready = 0;
-            break;
-        end
-    end
-end
+assign outputs_ready = (neuron_output_ready == 2**NUM_NEURONS - 1) ? 1 : 0;
 
 endmodule
