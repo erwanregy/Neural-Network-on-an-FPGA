@@ -1,21 +1,15 @@
 `timescale 1ns / 100ps
 
 module neuron #(parameter
-    INTG_WIDTH = 16,
-    FRAC_WIDTH = 16,
+    DATA_WIDTH = 32,
     NUM_INPUTS = 16,
-    ACTIVATION = "relu"
+    ACTIVATION = RELU
 ) (
     input logic clock, reset, input_ready,
     input logic signed [DATA_WIDTH-1:0] inputs[NUM_INPUTS],
     output logic signed [DATA_WIDTH-1:0] out,
     output logic output_ready
 );
-
-typedef struct packed {
-    logic signed [INTG_WIDTH-1:0] intg;
-    logic [FRAC_WIDTH-1:0] frac;
-} fixed;
 
 
 // Weights
