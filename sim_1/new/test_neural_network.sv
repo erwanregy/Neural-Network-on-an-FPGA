@@ -2,7 +2,7 @@
 
 module test_neural_network;
 
-localparam INT_WIDTH = 16, FRAC_WIDTH = 16;
+localparam DATA_WIDTH = 32;
 localparam NUM_LAYERS = 3;
 localparam NUM_INPUTS = 10;
 localparam LAYER LAYERS[NUM_LAYERS] = '{
@@ -11,19 +11,8 @@ localparam LAYER LAYERS[NUM_LAYERS] = '{
     '{10, RELU}
 };
 
-function real fixed_to_real(fixed #(INT_WIDTH, FRAC_WIDTH) f);
-    automatic real r = 0.0;
-    for (int i = 0; i < INT_WIDTH; i++) begin
-        r += f.integral[INT_WIDTH-1-i] * (1 << (INT_WIDTH-1-i));
-    end
-    for (int i = 0; i < FRAC_WIDTH; i++) begin
-        r += f.fraction[FRAC_WIDTH-1-i] * (1.0 / (1 << (i+1)));
-    end
-    return r;
-endfunction
-
 logic clock, reset, inputs_ready, outputs_ready;
-fixed #(INT_WIDTH, FRAC_WIDTH) inputs[NUM_INPUTS], outputs[LAYERS[NUM_LAYERS-1].NUM_NEURONS];
+logic signed [DATA_WIDTH-1:0] inputs[NUM_INPUTS], outputs[LAYERS[NUM_LAYERS-1].NUM_NEURONS];
 
 neural_network #(INT_WIDTH, FRAC_WIDTH, NUM_LAYERS, NUM_INPUTS, LAYERS) nn (.*);
 
