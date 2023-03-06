@@ -2,20 +2,22 @@
 
 `include "include.svh"
 
-module test_neuron;
+module test_dense_layer;
 
     // Device under test
 
     localparam int NUM_INPUTS = 16;
+    localparam int NUM_OUTPUTS = 16;
     localparam activation_type ACTIVATION = RELU;
 
-    logic clock, reset, inputs_ready, output_ready;
-    fixed_point inputs[NUM_INPUTS], out;
+    logic clock, reset, inputs_ready, outputs_ready;
+    fixed_point inputs[NUM_INPUTS], outputs[NUM_OUTPUTS];
 
-    neuron #(
+    dense_layer #(
         .NUM_INPUTS(NUM_INPUTS),
+        .NUM_NEURONS(NUM_OUTPUTS),
         .ACTIVATION(ACTIVATION)
-    ) n (.*);
+    ) dl (.*);
 
 
     // Clock generator
@@ -40,17 +42,18 @@ module test_neuron;
             inputs[i].fraction = $urandom_range(1 << FRACTION_WIDTH);
             $display("%b.%b", inputs[i].integral, inputs[i].fraction);
         end
-        inputs_ready = 1;
+        input_ready = 1;
 
         forever begin
             #CLOCK_PERIOD
-            if (output_ready) begin
-                $display("Output:");
-                $display("%b.%b", out.integral, out.fraction);
+            if (outputs_ready) begin
+                $display("Outputs:");
+                foreach (outputs[i]) begin
+                    $display("%b.%b", outputs[i].integral, outputs[i].fraction);
+                end
                 $stop;
             end
         end
-        $stop;
     end
 
 endmodule
