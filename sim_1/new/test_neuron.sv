@@ -4,18 +4,17 @@
 
 module test_neuron;
 
-    // Device under test
+    // Neuron
 
-    localparam int NUM_INPUTS = 16;
-    localparam activation_type ACTIVATION = RELU;
+    localparam int NUM_INPUTS = 4;
 
     logic clock, reset, inputs_ready, output_ready;
-    fixed_point inputs[NUM_INPUTS], out;
+    logic signed [INTEGER_WIDTH-1:-FRACTION_WIDTH] inputs[NUM_INPUTS], out;
 
     neuron #(
         .NUM_INPUTS(NUM_INPUTS),
-        .ACTIVATION(ACTIVATION)
-    ) n (.*);
+        .ACTIVATION(RELU)
+    ) n_relu (.*);
 
 
     // Clock generator
@@ -34,23 +33,17 @@ module test_neuron;
     initial begin
         #RESET_PERIOD
 
-        $display("Inputs:");
         foreach (inputs[i]) begin
-            inputs[i].integral = 0;
-            inputs[i].fraction = $urandom_range(1 << FRACTION_WIDTH);
-            $display("%b.%b", inputs[i].integral, inputs[i].fraction);
+            inputs[i] = $urandom_range(2 ** FRACTION_WIDTH - 1);
         end
         inputs_ready = 1;
 
         forever begin
             #CLOCK_PERIOD
             if (output_ready) begin
-                $display("Output:");
-                $display("%b.%b", out.integral, out.fraction);
                 $stop;
             end
         end
-        $stop;
     end
 
 endmodule

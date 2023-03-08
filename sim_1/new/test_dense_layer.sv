@@ -11,7 +11,7 @@ module test_dense_layer;
     localparam activation_type ACTIVATION = RELU;
 
     logic clock, reset, inputs_ready, outputs_ready;
-    fixed_point inputs[NUM_INPUTS], outputs[NUM_OUTPUTS];
+    logic signed [INTEGER_WIDTH-1:-FRACTION_WIDTH] inputs[NUM_INPUTS], outputs[NUM_OUTPUTS];
 
     dense_layer #(
         .NUM_INPUTS(NUM_INPUTS),

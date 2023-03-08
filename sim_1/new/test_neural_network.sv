@@ -15,7 +15,7 @@ module test_neural_network;
     };
     
     logic clock, reset, inputs_ready, outputs_ready;
-    fixed_point inputs[LAYERS[0].SIZE], outputs[LAYERS[NUM_LAYERS-1].SIZE];
+    logic signed [INTEGER_WIDTH-1:-FRACTION_WIDTH] inputs[LAYERS[0].SIZE], outputs[LAYERS[NUM_LAYERS-1].SIZE];
     
     neural_network #(
         .NUM_LAYERS(NUM_LAYERS),

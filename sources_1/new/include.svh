@@ -1,13 +1,8 @@
 `ifndef INCLUDE_SVH
 `define INCLUDE_SVH
 
-parameter INTEGRAL_WIDTH = 16;
-parameter FRACTION_WIDTH = 16;
-
-typedef struct packed {
-    logic signed [INTEGRAL_WIDTH-1:0] integral;
-    logic [FRACTION_WIDTH-1:0] fraction;
-} fixed_point; // signed fixed_point type
+parameter INTEGER_WIDTH = 4;
+parameter FRACTION_WIDTH = 4;
 
 typedef enum logic [1:0] {RELU, SIGMOID, NONE} activation_type;
 

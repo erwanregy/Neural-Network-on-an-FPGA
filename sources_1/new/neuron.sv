@@ -7,32 +7,28 @@ module neuron #(parameter
     activation_type ACTIVATION = RELU
 ) (
     input logic clock, reset, inputs_ready,
-    input fixed_point inputs[NUM_INPUTS],
-    output fixed_point out,
+    input logic signed [INTEGER_WIDTH-1:-FRACTION_WIDTH] inputs[NUM_INPUTS],
+    output logic signed [INTEGER_WIDTH-1:-FRACTION_WIDTH] out,
     output logic output_ready
 );
-
-    localparam DATA_WIDTH = INTEGRAL_WIDTH + FRACTION_WIDTH;
-    
     
     // Weights
     
     localparam NUM_WEIGHTS = NUM_INPUTS;
     
-    fixed_point weights[NUM_WEIGHTS];
+    logic signed [INTEGER_WIDTH-1:-FRACTION_WIDTH] weights[NUM_WEIGHTS];
     
     initial begin
         foreach (weights[i]) begin
-            weights[i].integral = 0;
-            weights[i].integral[INTEGRAL_WIDTH-1] = $random;
-            weights[i].fraction = $urandom_range((2 ** (FRACTION_WIDTH - 1)) / 10);
+            weights[i][INTEGER_WIDTH-1:0] = $urandom_range(3) ? '0 : '1;
+            weights[i][-1:-FRACTION_WIDTH] = $urandom_range(2 ** (FRACTION_WIDTH - 1));
         end
     end
     
     
     // Bias
     
-    fixed_point bias;
+    logic signed [INTEGER_WIDTH-1:-FRACTION_WIDTH] bias;
     
     initial begin
         bias = 0;
@@ -46,10 +42,11 @@ module neuron #(parameter
     
     // Multiplication
     
-    localparam PRODUCT_WIDTH = 2 * DATA_WIDTH;
+    localparam PRODUCT_INTEGER_WIDTH = 2 * INTEGER_WIDTH;
+    localparam PRODUCT_FRACTION_WIDTH = 2 * FRACTION_WIDTH;
     localparam NUM_PRODUCTS = NUM_INPUTS;
     
-    logic signed [PRODUCT_WIDTH-1:0] products[NUM_PRODUCTS];
+    logic signed [PRODUCT_INTEGER_WIDTH-1:-PRODUCT_FRACTION_WIDTH] products[NUM_PRODUCTS];
     
     always_ff @(posedge clock or posedge reset) begin: multipliers
         if (reset) begin
@@ -90,14 +87,10 @@ module neuron #(parameter
         end
     end
     
-    localparam SUM_WIDTH = PRODUCT_WIDTH + PRODUCT_NUM_WIDTH;
+    localparam SUM_INTEGER_WIDTH = PRODUCT_NUM_WIDTH + PRODUCT_INTEGER_WIDTH;
+    localparam SUM_FRACTION_WIDTH = PRODUCT_FRACTION_WIDTH;
     
-    typedef struct packed {
-        logic signed [SUM_WIDTH-FRACTION_WIDTH-1:0] integral;
-        logic [FRACTION_WIDTH-1:0] fraction;
-    } fixed_point_sum;
-    
-    fixed_point_sum sum;
+    logic signed [SUM_INTEGER_WIDTH-1:-SUM_FRACTION_WIDTH] sum;
     
     always_ff @(posedge clock or posedge reset) begin : accumulator
         if (reset) begin
@@ -121,9 +114,9 @@ module neuron #(parameter
     // need to calculate a reasonable domain to calc sigmoid values for, (depending on frac_width precision?)
     // then precompute these values and store in sigmoid
 
-    localparam NUM_SIGMOID_ENTRIES = 2 ** FRACTION_WIDTH - 1;
+    localparam NUM_SIGMOID_ENTRIES = 2 ** SUM_FRACTION_WIDTH - 1;
     
-    logic signed [DATA_WIDTH-1:0] sigmoid[-NUM_SIGMOID_ENTRIES/2:NUM_SIGMOID_ENTRIES/2 - 1]; // TODO: only generate sigmoid rom if ACTIVATION is SIGMOID
+    logic signed [INTEGER_WIDTH-1:0] sigmoid[-NUM_SIGMOID_ENTRIES/2:NUM_SIGMOID_ENTRIES/2 - 1]; // TODO: only generate sigmoid rom if ACTIVATION is SIGMOID
     
     initial begin
         foreach (sigmoid[i]) begin
@@ -139,22 +132,26 @@ module neuron #(parameter
         end else if (activate) begin
             unique case (ACTIVATION)
                 RELU: begin
-                    if (sum[SUM_WIDTH-1] == 0) begin
-                        if (sum >= (2 ** DATA_WIDTH - 1)) begin
-                            out <= 2 ** (DATA_WIDTH - 1) - 1;
-                        end else begin
-                            out <= sum;
-                        end
-                    end else begin
+                    if (sum[SUM_INTEGER_WIDTH-1]) begin
                         out <= 0;
+                    end else begin
+                        if (sum[SUM_INTEGER_WIDTH-1:0] >= 2 ** INTEGER_WIDTH - 1) begin
+                            out <= 2 ** INTEGER_WIDTH+FRACTION_WIDTH - 1;
+                        end else if (sum[-1:-SUM_FRACTION_WIDTH] <= 2 ** FRACTION_WIDTH - 1) begin
+                            out <= 1;
+                        end else begin
+                            out[INTEGER_WIDTH-1:0] <= sum[INTEGER_WIDTH-1:0];
+                            out[-1:-FRACTION_WIDTH] <= out[-1:-FRACTION_WIDTH];
+                        end
                     end
                 end SIGMOID: begin
                     if (sum >= NUM_SIGMOID_ENTRIES/2) begin
-                        out <= 1 << FRACTION_WIDTH;
+                        out[INTEGER_WIDTH-1:0] <= '0;
+                        out[-1:-FRACTION_WIDTH] <= '1;
                     end else if (sum < -NUM_SIGMOID_ENTRIES/2) begin
                         out <= 0;
                     end else begin
-                        out <= sigmoid[sum.fraction];
+                        out <= sigmoid[sum[-1:-SUM_FRACTION_WIDTH]];
                     end
                 end default: begin
                     $fatal("Invalid activation function %s", ACTIVATION.name());

@@ -8,8 +8,8 @@ module dense_layer #(parameter
     activation_type ACTIVATION = RELU
 ) (
     input logic clock, reset, inputs_ready,
-    input fixed_point inputs[NUM_INPUTS],
-    output fixed_point outputs[NUM_NEURONS],
+    input logic signed [INTEGER_WIDTH-1:-FRACTION_WIDTH] inputs[NUM_INPUTS],
+    output logic signed [INTEGER_WIDTH-1:-FRACTION_WIDTH] outputs[NUM_NEURONS],
     output logic outputs_ready
 );
 

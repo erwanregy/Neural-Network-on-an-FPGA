@@ -15,11 +15,11 @@ module test_regnet;
     };
     
     localparam NUM_PIXELS = LAYERS[0].SIZE;
-    fixed_point image[NUM_PIXELS];
+    logic signed [INTEGER_WIDTH-1:-FRACTION_WIDTH] image[NUM_PIXELS];
 
     logic clock, reset;
     logic image_ready;
-    fixed_point pixels[INPUT_SIZE];
+    logic signed [INTEGER_WIDTH-1:-FRACTION_WIDTH] pixels[INPUT_SIZE];
     logic [$clog2(LAYERS[NUM_LAYERS-1].SIZE)-1:0] label;
     logic label_ready;
 

@@ -12,18 +12,18 @@ module neural_network #(parameter
     }
 ) (
     input logic clock, reset, inputs_ready,
-    input fixed_point inputs[LAYERS[0].SIZE],
-    output fixed_point outputs[LAYERS[NUM_LAYERS-1].SIZE],
+    input logic signed [INTEGER_WIDTH-1:-FRACTION_WIDTH] inputs[LAYERS[0].SIZE],
+    output logic signed [INTEGER_WIDTH-1:-FRACTION_WIDTH] outputs[LAYERS[NUM_LAYERS-1].SIZE],
     output logic outputs_ready
 );
     
-    fixed_point layer_1_inputs[LAYERS[0].SIZE];
+    logic signed [INTEGER_WIDTH-1:-FRACTION_WIDTH] layer_1_inputs[LAYERS[0].SIZE];
     logic layer_1_inputs_ready;
     
     assign layer_1_inputs = inputs;
     assign layer_1_inputs_ready = inputs_ready;
 
-    fixed_point layer_1_outputs[LAYERS[1].SIZE];
+    logic signed [INTEGER_WIDTH-1:-FRACTION_WIDTH] layer_1_outputs[LAYERS[1].SIZE];
     logic layer_1_outputs_ready;
     
     dense_layer #(
@@ -38,13 +38,13 @@ module neural_network #(parameter
        .outputs_ready(layer_1_outputs_ready)
     );
     
-    fixed_point layer_2_inputs[LAYERS[1].SIZE];
+    logic signed [INTEGER_WIDTH-1:-FRACTION_WIDTH] layer_2_inputs[LAYERS[1].SIZE];
     logic layer_2_inputs_ready;
     
     assign layer_2_inputs = layer_1_outputs;
     assign layer_2_inputs_ready = layer_1_outputs_ready;
     
-    fixed_point layer_2_outputs[LAYERS[2].SIZE];
+    logic signed [INTEGER_WIDTH-1:-FRACTION_WIDTH] layer_2_outputs[LAYERS[2].SIZE];
     logic layer_2_outputs_ready;
     
     dense_layer #(
@@ -59,13 +59,13 @@ module neural_network #(parameter
        .outputs_ready(layer_2_outputs_ready)
     );
     
-    fixed_point layer_3_inputs[LAYERS[2].SIZE];
+    logic signed [INTEGER_WIDTH-1:-FRACTION_WIDTH] layer_3_inputs[LAYERS[2].SIZE];
     logic layer_3_inputs_ready;
     
     assign layer_3_inputs = layer_2_outputs;
     assign layer_3_inputs_ready = layer_2_outputs_ready;
     
-    fixed_point layer_3_outputs[LAYERS[3].SIZE];
+    logic signed [INTEGER_WIDTH-1:-FRACTION_WIDTH] layer_3_outputs[LAYERS[3].SIZE];
     logic layer_3_outputs_ready;
     
     dense_layer #(
