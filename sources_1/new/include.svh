@@ -1,8 +1,8 @@
 `ifndef INCLUDE_SVH
 `define INCLUDE_SVH
 
-parameter INTEGER_WIDTH = 4;
-parameter FRACTION_WIDTH = 4;
+parameter INTEGER_WIDTH = 8;
+parameter FRACTION_WIDTH = 8;
 
 typedef enum logic [1:0] {RELU, SIGMOID, NONE} activation_type;
 

@@ -8,10 +8,9 @@ module test_neural_network;
 
     localparam int NUM_LAYERS = 4;
     localparam layer_builder LAYERS[NUM_LAYERS] = '{
-        '{INPUT, 10, NONE},
-        '{DENSE, 16, RELU},
-        '{DENSE, 16, RELU},
-        '{DENSE, 10, RELU}
+        '{INPUT, 120, NONE},
+        '{DENSE, 84, RELU},
+        '{DENSE, 10, SIGMOID}
     };
     
     logic clock, reset, inputs_ready, outputs_ready;
@@ -41,8 +40,7 @@ module test_neural_network;
 
         $display("Inputs:");
         foreach (inputs[i]) begin
-            inputs[i].integral = 0;
-            inputs[i].fraction = $urandom_range(1 << FRACTION_WIDTH);
+            inputs[i] = $urandom_range(2 ** FRACTION_WIDTH);
             $display("%b.%b", inputs[i].integral, inputs[i].fraction);
         end
         inputs_ready = 1;

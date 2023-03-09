@@ -20,8 +20,10 @@ module neuron #(parameter
     
     initial begin
         foreach (weights[i]) begin
-            weights[i][INTEGER_WIDTH-1:0] = $urandom_range(3) ? '0 : '1;
-            weights[i][-1:-FRACTION_WIDTH] = $urandom_range(2 ** (FRACTION_WIDTH - 1));
+//            weights[i][INTEGER_WIDTH-1:0] = $urandom_range(4) ? '0 : '1;
+//            weights[i][-1:-FRACTION_WIDTH] = $urandom_range(2 ** (FRACTION_WIDTH - 1));
+            weights[i][INTEGER_WIDTH-1:0] = 3;
+            weights[i][-1:-FRACTION_WIDTH] = 0;
         end
     end
     
@@ -31,75 +33,47 @@ module neuron #(parameter
     logic signed [INTEGER_WIDTH-1:-FRACTION_WIDTH] bias;
     
     initial begin
-        bias = 0;
+//        bias = 0;
+        bias[INTEGER_WIDTH-1:0] = 3;
+        bias[-1:-FRACTION_WIDTH] = 0;
     end
     
     
     // State machine outputs
     
-    logic reset_units, multiply, accumulate, activate;
+    logic reset_units, multiply_accumulate, activate;
     
     
-    // Multiplication
+    // Multiply accumulation
     
-    localparam PRODUCT_INTEGER_WIDTH = 2 * INTEGER_WIDTH;
-    localparam PRODUCT_FRACTION_WIDTH = 2 * FRACTION_WIDTH;
-    localparam NUM_PRODUCTS = NUM_INPUTS;
+    localparam INPUT_NUM_WIDTH = $clog2(NUM_INPUTS);
     
-    logic signed [PRODUCT_INTEGER_WIDTH-1:-PRODUCT_FRACTION_WIDTH] products[NUM_PRODUCTS];
+    logic [INPUT_NUM_WIDTH-1:0] input_num;
     
-    always_ff @(posedge clock or posedge reset) begin: multipliers
+    always_ff @(posedge clock or posedge reset) begin: input_num_counter
         if (reset) begin
-            foreach (products[i]) begin
-                products[i] <= 0;
-            end
+            input_num <= 0;
         end else if (reset_units) begin
-            foreach (products[i]) begin
-                products[i] <= 0;
-            end
-        end else if (multiply) begin
-            foreach (products[i]) begin
-                products[i] <= inputs[i] * weights[i];
-            end
+            input_num <= 0;
+        end else if (multiply_accumulate) begin
+            input_num <= input_num + 1;
         end else begin
-            foreach (products[i]) begin
-                products[i] <= products[i];
-            end
+            input_num <= input_num;
         end
     end
     
-    
-    // Accumulation
-    
-    localparam PRODUCT_NUM_WIDTH = $clog2(NUM_INPUTS);
-    
-    logic [PRODUCT_NUM_WIDTH-1:0] product_num;
-    
-    always_ff @(posedge clock or posedge reset) begin: product_num_counter
-        if (reset) begin
-            product_num <= 0;
-        end else if (reset_units) begin
-            product_num <= 0;
-        end else if (accumulate) begin
-            product_num <= product_num + 1;
-        end else begin
-            product_num <= product_num;
-        end
-    end
-    
-    localparam SUM_INTEGER_WIDTH = PRODUCT_NUM_WIDTH + PRODUCT_INTEGER_WIDTH;
-    localparam SUM_FRACTION_WIDTH = PRODUCT_FRACTION_WIDTH;
+    localparam SUM_INTEGER_WIDTH = INPUT_NUM_WIDTH + 2 * INTEGER_WIDTH;
+    localparam SUM_FRACTION_WIDTH = 2 * FRACTION_WIDTH;
     
     logic signed [SUM_INTEGER_WIDTH-1:-SUM_FRACTION_WIDTH] sum;
     
-    always_ff @(posedge clock or posedge reset) begin : accumulator
+    always_ff @(posedge clock or posedge reset) begin: multiply_accumulator
         if (reset) begin
-            sum <= 0;
+            sum <= bias;
         end else if (reset_units) begin
-            sum <= 0;
-        end else if (accumulate) begin
-            // TODO: parallelise or optimise
-            sum <= sum + products[product_num];
+            sum <= bias;
+        end else if (multiply_accumulate) begin
+            sum <= sum + inputs[input_num] * weights[input_num];
         end else begin
             sum <= sum;
         end
@@ -113,14 +87,14 @@ module neuron #(parameter
     // values of sum greater than or less than the range specified can be rounded to 1 or 0 respectively
     // need to calculate a reasonable domain to calc sigmoid values for, (depending on frac_width precision?)
     // then precompute these values and store in sigmoid
-
-    localparam NUM_SIGMOID_ENTRIES = 2 ** SUM_FRACTION_WIDTH - 1;
     
-    logic signed [INTEGER_WIDTH-1:0] sigmoid[-NUM_SIGMOID_ENTRIES/2:NUM_SIGMOID_ENTRIES/2 - 1]; // TODO: only generate sigmoid rom if ACTIVATION is SIGMOID
+    localparam logic [SUM_FRACTION_WIDTH-1:0] NUM_SIGMOID_ENTRIES = 2 ** SUM_FRACTION_WIDTH - 1;
+    
+    logic signed [-1:-FRACTION_WIDTH] sigmoid[-NUM_SIGMOID_ENTRIES/2:NUM_SIGMOID_ENTRIES/2-1]; // TODO: only generate sigmoid rom if ACTIVATION is SIGMOID
     
     initial begin
         foreach (sigmoid[i]) begin
-
+            sigmoid[i] = 2 ** (FRACTION_WIDTH - 1);
         end
     end
     
@@ -135,20 +109,23 @@ module neuron #(parameter
                     if (sum[SUM_INTEGER_WIDTH-1]) begin
                         out <= 0;
                     end else begin
-                        if (sum[SUM_INTEGER_WIDTH-1:0] >= 2 ** INTEGER_WIDTH - 1) begin
-                            out <= 2 ** INTEGER_WIDTH+FRACTION_WIDTH - 1;
-                        end else if (sum[-1:-SUM_FRACTION_WIDTH] <= 2 ** FRACTION_WIDTH - 1) begin
-                            out <= 1;
-                        end else begin
-                            out[INTEGER_WIDTH-1:0] <= sum[INTEGER_WIDTH-1:0];
-                            out[-1:-FRACTION_WIDTH] <= out[-1:-FRACTION_WIDTH];
+                        if (sum[SUM_INTEGER_WIDTH-1]) begin
+                            out <= 0;
+                        end else begin 
+                            if (sum[SUM_INTEGER_WIDTH-1:INTEGER_WIDTH-1]) begin
+                                out <= 2 ** (INTEGER_WIDTH + FRACTION_WIDTH - 1) - 1;
+                            end else begin
+                                out <= sum[INTEGER_WIDTH-1:-FRACTION_WIDTH];
+                            end
                         end
                     end
                 end SIGMOID: begin
-                    if (sum >= NUM_SIGMOID_ENTRIES/2) begin
-                        out[INTEGER_WIDTH-1:0] <= '0;
-                        out[-1:-FRACTION_WIDTH] <= '1;
-                    end else if (sum < -NUM_SIGMOID_ENTRIES/2) begin
+                    $display(sum[SUM_INTEGER_WIDTH-1:0]);
+                    $display(NUM_SIGMOID_ENTRIES/2);
+                    $display(-NUM_SIGMOID_ENTRIES/2);
+                    if (sum[SUM_INTEGER_WIDTH-1:0] >= NUM_SIGMOID_ENTRIES/2) begin
+                        out <= 2 ** FRACTION_WIDTH;
+                    end else if (sum[SUM_INTEGER_WIDTH-1:0] < -NUM_SIGMOID_ENTRIES/2) begin
                         out <= 0;
                     end else begin
                         out <= sigmoid[sum[-1:-SUM_FRACTION_WIDTH]];
@@ -165,7 +142,7 @@ module neuron #(parameter
     
     // State machine
     
-    enum logic [2:0] {waiting, multiplying, accumulating, activating, done} present_state, next_state;
+    enum logic [1:0] {waiting, multiply_accumulating, activating, outputting} present_state, next_state;
     
     always_ff @(posedge clock, posedge reset) begin
         if (reset) begin
@@ -177,8 +154,7 @@ module neuron #(parameter
     
     always_comb begin
         reset_units = 0;
-        multiply = 0;
-        accumulate = 0;
+        multiply_accumulate = 0;
         activate = 0;
         output_ready = 0;
         next_state = present_state;
@@ -186,20 +162,16 @@ module neuron #(parameter
             waiting: begin
                 reset_units = 1;
                 if (inputs_ready) begin
-                    next_state = multiplying;
+                    next_state = multiply_accumulating;
                 end else begin
                     next_state = waiting;
                 end 
             end
-            multiplying: begin
-                multiply = 1;
-                next_state = accumulating;
-            end
-            accumulating: begin
-                accumulate = 1;
-                if (product_num < NUM_PRODUCTS - 1) begin
-                    next_state = accumulating;
-                end else if (product_num == NUM_PRODUCTS - 1) begin
+            multiply_accumulating: begin
+                multiply_accumulate = 1;
+                if (input_num < NUM_INPUTS - 1) begin
+                    next_state = multiply_accumulating;
+                end else if (input_num == NUM_INPUTS - 1) begin
                     next_state = activating;
                 end else begin
                     next_state = waiting;
@@ -207,9 +179,9 @@ module neuron #(parameter
             end
             activating: begin
                 activate = 1;
-                next_state = done;
+                next_state = outputting;
             end
-            done: begin
+            outputting: begin
                 output_ready = 1;
                 next_state = waiting;
             end
