@@ -2,7 +2,7 @@
 
 module test_dense_layer;
 
-    // Device under test
+    // Dense layer
 
     localparam int NUM_INPUTS = 16;
     localparam int NUM_OUTPUTS = 16;
@@ -20,13 +20,7 @@ module test_dense_layer;
 
     // Clock generator
 
-    localparam real CLOCK_PERIOD = 1.0;
-    localparam real RESET_PERIOD = 0.1;
-
-    clock_generator #(
-        .CLOCK_PERIOD(CLOCK_PERIOD),
-        .RESET_PERIOD(RESET_PERIOD)
-    ) cg (.*);
+    clock_generator cg (.*);
 
 
     // Stimulus

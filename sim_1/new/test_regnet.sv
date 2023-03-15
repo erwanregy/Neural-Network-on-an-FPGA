@@ -2,6 +2,8 @@
 
 module test_regnet;
 
+    // Regnet
+
     localparam DATA_WIDTH = 32;
     localparam INPUT_SIZE = 1;
     localparam NUM_LAYERS = 4;
@@ -26,21 +28,13 @@ module test_regnet;
         .NUM_LAYERS(NUM_LAYERS),
         .LAYERS(LAYERS)
     ) regnet (.*);
-    
-    
-    initial begin
-        clock = 0;
-        reset = 0;
-        #0.5
-        reset = 1;
-        #0.5
-        reset = 0;
-        forever begin
-            clock = ~clock;
-            #0.5;
-        end
-    end
-    
+
+
+    // Clock generator
+
+    clock_generator cg (.*);
+
+
     initial begin
         #1
         foreach (image[i]) begin

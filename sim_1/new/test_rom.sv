@@ -4,9 +4,6 @@ module test_rom;
 
     // ROM
 
-    localparam int INT_WIDTH = 8;
-    localparam int FRAC_WIDTH = 8;
-    
     localparam int NUM_WEIGHTS = 784;
     localparam string WEIGHTS_FILE = "weights.mem";
 
@@ -27,13 +24,7 @@ module test_rom;
 
     // Clock generator
 
-    localparam real CLOCK_PERIOD = 1.0;
-    localparam real RESET_PERIOD = 0.1;
-
-    clock_generator #(
-        .CLOCK_PERIOD(CLOCK_PERIOD),
-        .RESET_PERIOD(RESET_PERIOD)
-    ) cg (.*);
+    clock_generator cg (.*);
 
 
     // Testbench

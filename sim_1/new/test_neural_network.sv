@@ -2,7 +2,7 @@
 
 module test_neural_network;
     
-    // Device under test
+    // Neural network
 
     localparam int NUM_LAYERS = 4;
     localparam layer_builder LAYERS[NUM_LAYERS] = '{
@@ -22,13 +22,7 @@ module test_neural_network;
 
     // Clock generator
 
-    localparam real CLOCK_PERIOD = 1.0;
-    localparam real RESET_PERIOD = 0.1;
-
-    clock_generator #(
-        .CLOCK_PERIOD(CLOCK_PERIOD),
-        .RESET_PERIOD(RESET_PERIOD)
-    ) cg (.*);
+    clock_generator cg (.*);
 
 
     // Stimulus
