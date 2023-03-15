@@ -8,7 +8,7 @@ module test_rom;
     localparam int FRAC_WIDTH = 8;
     
     localparam int NUM_WEIGHTS = 784;
-    localparam string FILE_PATH = "weights.mem";
+    localparam string WEIGHTS_FILE = "weights.mem";
 
     logic clock, reset;
     logic [$clog2(NUM_WEIGHTS)-1:0] weight_num;
@@ -17,7 +17,7 @@ module test_rom;
     rom #(
         .WIDTH(INT_WIDTH + FRAC_WIDTH),
         .DEPTH(NUM_WEIGHTS),
-        .FILE(FILE_PATH)
+        .FILE(WEIGHTS_FILE)
     ) parameters (
         .clock(clock),
         .address(weight_num),
