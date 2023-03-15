@@ -1,4 +1,4 @@
-`timescale 1ns / 1ps
+`include "include.svh"
 
 module rom #(parameter
     int WIDTH = 16,

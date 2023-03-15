@@ -1,5 +1,3 @@
-`timescale 1ns / 1ps
-
 `include "include.svh"
 
 module neural_network #(parameter

@@ -1,4 +1,4 @@
-`timescale 1ns / 1ps
+`include "include.svh"
 
 module clock_generator #(parameter
     real CLOCK_PERIOD = 10,

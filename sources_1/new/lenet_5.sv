@@ -1,5 +1,3 @@
-`timescale 1ns / 1ps
-
 `include "include.svh"
 
 module lenet_5 #(parameter
