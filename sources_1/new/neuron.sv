@@ -2,7 +2,8 @@
 
 module neuron #(parameter
     int NUM_INPUTS = 16,
-    activation_type ACTIVATION = RELU
+    activation_type ACTIVATION = RELU,
+    string PARAMETERS_FILE = "neuron.mem"
 ) (
     input logic clock, reset,
     input logic inputs_ready,
@@ -11,39 +12,12 @@ module neuron #(parameter
     output logic output_ready
 );
     
-    // Weights
-    
-    localparam NUM_WEIGHTS = NUM_INPUTS;
-    
-    logic signed [INTEGER_WIDTH-1:-FRACTION_WIDTH] weights[NUM_WEIGHTS];
-    
-    initial begin
-        foreach (weights[i]) begin
-//            weights[i][INTEGER_WIDTH-1:0] = $urandom_range(4) ? '0 : '1;
-//            weights[i][-1:-FRACTION_WIDTH] = $urandom_range(2 ** (FRACTION_WIDTH - 1));
-            weights[i][INTEGER_WIDTH-1:0] = 3;
-            weights[i][-1:-FRACTION_WIDTH] = 0;
-        end
-    end
-    
-    
-    // Bias
-    
-    logic signed [INTEGER_WIDTH-1:-FRACTION_WIDTH] bias;
-    
-    initial begin
-//        bias = 0;
-        bias[INTEGER_WIDTH-1:0] = 3;
-        bias[-1:-FRACTION_WIDTH] = 0;
-    end
-    
-    
     // State machine outputs
     
     logic reset_units, multiply_accumulate, activate;
+
     
-    
-    // Multiply accumulation
+    // Input number counter
     
     localparam INPUT_NUM_WIDTH = $clog2(NUM_INPUTS);
     
@@ -60,6 +34,24 @@ module neuron #(parameter
             input_num <= input_num;
         end
     end
+    
+    
+    // Parameters
+    
+    logic signed [INTEGER_WIDTH-1:-FRACTION_WIDTH] weights;
+    
+    parameters #(
+        .WIDTH(INTEGER_WIDTH + FRACTION_WIDTH),
+        .NUM_WEIGHTS(NUM_INPUTS),
+        .FILE(PARAMETERS_FILE)
+    ) parameters (
+        .clock(clock),
+        .weight_num(input_num),
+        .weight(weight), .bias(bias)
+    );
+    
+    
+    // Multiply accumulation
     
     localparam SUM_INTEGER_WIDTH = INPUT_NUM_WIDTH + 2 * INTEGER_WIDTH;
     localparam SUM_FRACTION_WIDTH = 2 * FRACTION_WIDTH;
@@ -80,63 +72,49 @@ module neuron #(parameter
     
     
     // Activation
-    // TODO: add sigmoid
-    
+
+    // TODO: add sigmoid   
     // I want to have 2**FRACTION_WIDTH - 1 number of entries in sigmoid to keep FRAC_WIDTH precision
     // values of sum greater than or less than the range specified can be rounded to 1 or 0 respectively
     // need to calculate a reasonable domain to calc sigmoid values for, (depending on frac_width precision?)
     // then precompute these values and store in sigmoid
     
-    localparam logic [SUM_FRACTION_WIDTH-1:0] NUM_SIGMOID_ENTRIES = 2 ** SUM_FRACTION_WIDTH - 1;
+    // localparam logic [SUM_FRACTION_WIDTH-1:0] NUM_SIGMOID_ENTRIES = 2 ** SUM_FRACTION_WIDTH - 1;
     
-    logic signed [-1:-FRACTION_WIDTH] sigmoid[-NUM_SIGMOID_ENTRIES/2:NUM_SIGMOID_ENTRIES/2-1]; // TODO: only generate sigmoid rom if ACTIVATION is SIGMOID
+    // logic signed [-1:-FRACTION_WIDTH] sigmoid[-NUM_SIGMOID_ENTRIES/2:NUM_SIGMOID_ENTRIES/2-1]; // TODO: only generate sigmoid rom if ACTIVATION is SIGMOID
     
-    initial begin
-        foreach (sigmoid[i]) begin
-            sigmoid[i] = 2 ** (FRACTION_WIDTH - 1);
-        end
-    end
-    
-    always_ff @(posedge clock or posedge reset) begin : activator
-        if (reset) begin
-            out <= 0;
-        end else if (reset_units) begin
-            out <= 0;
-        end else if (activate) begin
-            unique case (ACTIVATION)
-                RELU: begin
-                    if (sum[SUM_INTEGER_WIDTH-1]) begin
-                        out <= 0;
-                    end else begin
-                        if (sum[SUM_INTEGER_WIDTH-1]) begin
-                            out <= 0;
-                        end else begin 
-                            if (sum[SUM_INTEGER_WIDTH-1:INTEGER_WIDTH-1]) begin
-                                out <= 2 ** (INTEGER_WIDTH + FRACTION_WIDTH - 1) - 1;
-                            end else begin
-                                out <= sum[INTEGER_WIDTH-1:-FRACTION_WIDTH];
-                            end
-                        end
-                    end
-                end SIGMOID: begin
-                    $display(sum[SUM_INTEGER_WIDTH-1:0]);
-                    $display(NUM_SIGMOID_ENTRIES/2);
-                    $display(-NUM_SIGMOID_ENTRIES/2);
-                    if (sum[SUM_INTEGER_WIDTH-1:0] >= NUM_SIGMOID_ENTRIES/2) begin
-                        out <= 2 ** FRACTION_WIDTH;
-                    end else if (sum[SUM_INTEGER_WIDTH-1:0] < -NUM_SIGMOID_ENTRIES/2) begin
-                        out <= 0;
-                    end else begin
-                        out <= sigmoid[sum[-1:-SUM_FRACTION_WIDTH]];
-                    end
-                end default: begin
-                    $error("Invalid activation function %s", ACTIVATION.name());
-                end
-            endcase
-        end else begin
-            out <= out;
-        end
-    end
+    // initial begin
+    //     foreach (sigmoid[i]) begin
+    //         sigmoid[i] = 2 ** (FRACTION_WIDTH - 1);
+    //     end
+    // end
+
+    generate
+        case (ACTIVATION)
+            SIGMOID: begin
+                sigmoid #(
+                    .INTEGER_WIDTH(INTEGER_WIDTH),
+                    .FRACTION_WIDTH(FRACTION_WIDTH)
+                    // .NUM_ENTRIES(2 ** SUM_FRACTION_WIDTH - 1), : not needed, info gatherable from frac_width above
+                ) sigmoid (
+                    .clock(clock), .reset(reset),
+                    .in(sum),
+                    .out(out)
+                );
+            end RELU: begin
+                relu #(
+                    .INTEGER_WIDTH(INTEGER_WIDTH),
+                    .FRACTION_WIDTH(FRACTION_WIDTH)
+                ) relu (
+                    .clock(clock), .reset(reset),
+                    .in(sum),
+                    .out(out)
+                );
+            end default: begin
+                $error("Invalid activation function %0s", ACTIVATION.name());
+            end
+        endcase
+    endgenerate
     
     
     // State machine
