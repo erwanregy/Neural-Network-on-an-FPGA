@@ -93,20 +93,22 @@ module neuron #(parameter
         case (ACTIVATION)
             SIGMOID: begin
                 sigmoid #(
-                    .INTEGER_WIDTH(INTEGER_WIDTH),
-                    .FRACTION_WIDTH(FRACTION_WIDTH)
-                    // .NUM_ENTRIES(2 ** SUM_FRACTION_WIDTH - 1), : not needed, info gatherable from frac_width above
+                    .INPUT_INTEGER_WIDTH(SUM_INTEGER_WIDTH),
+                    .INPUT_FRACTION_WIDTH(SUM_FRACTION_WIDTH)
+                    .OUTPUT_FRACTION_WIDTH(FRACTION_WIDTH),
                 ) sigmoid (
                     .clock(clock), .reset(reset),
+                    .rest_output(reset_units), .enable(activate),
                     .in(sum),
                     .out(out)
                 );
             end RELU: begin
                 relu #(
-                    .INTEGER_WIDTH(INTEGER_WIDTH),
-                    .FRACTION_WIDTH(FRACTION_WIDTH)
+                    .INPUT_WIDTH(SUM_INTEGER_WIDTH + SUM_FRACTION_WIDTH),
+                    .OUTPUT_WIDTH(INTEGER_WIDTH + FRACTION_WIDTH),
                 ) relu (
                     .clock(clock), .reset(reset),
+                    .rest_output(reset_units), .enable(activate),
                     .in(sum),
                     .out(out)
                 );
