@@ -6,7 +6,8 @@ module neuron #(parameter
     int NUM_INPUTS = 16,
     activation_type ACTIVATION = RELU
 ) (
-    input logic clock, reset, inputs_ready,
+    input logic clock, reset,
+    input logic inputs_ready,
     input logic signed [INTEGER_WIDTH-1:-FRACTION_WIDTH] inputs[NUM_INPUTS],
     output logic signed [INTEGER_WIDTH-1:-FRACTION_WIDTH] out,
     output logic output_ready
