@@ -11,7 +11,8 @@ module neural_network #(parameter
         '{DENSE, 10, SIGMOID}
     }
 ) (
-    input logic clock, reset, inputs_ready,
+    input logic clock, reset,
+    input logic inputs_ready,
     input logic signed [INTEGER_WIDTH-1:-FRACTION_WIDTH] inputs[LAYERS[0].SIZE],
     output logic signed [INTEGER_WIDTH-1:-FRACTION_WIDTH] outputs[LAYERS[NUM_LAYERS-1].SIZE],
     output logic outputs_ready
