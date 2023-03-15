@@ -7,24 +7,21 @@ module test_rom;
     localparam int INT_WIDTH = 8;
     localparam int FRAC_WIDTH = 8;
     
-    localparam type T = logic signed [INT_WIDTH-1:-FRAC_WIDTH];
-    
-    localparam int NUM_ELEMENTS = 4;
-//    localparam string FILE_PATH = "C:/Users/erwan/OneDrive - University of Southampton/Code/SystemVerilog/Neural Network/Neural Network.srcs/models/3b1b/layer_0/neuron_0/weights.mem";
+    localparam int NUM_WEIGHTS = 784;
     localparam string FILE_PATH = "weights.mem";
 
-    logic clock, reset, enable_rom;
-    logic [$clog2(NUM_ELEMENTS)-1:0] element_num;
-    T element;
+    logic clock, reset;
+    logic [$clog2(NUM_WEIGHTS)-1:0] weight_num;
+    logic signed [INT_WIDTH-1:-FRAC_WIDTH] weight;
 
     rom #(
-        .T(T),
-        .NUM_ELEMENTS(NUM_ELEMENTS),
-        .FILE_PATH(FILE_PATH)
-    ) rom (
-        .clock(clock), .reset(reset), .enable(enable_rom),
-        .address(element_num),
-        .out(element)
+        .WIDTH(INT_WIDTH + FRAC_WIDTH),
+        .DEPTH(NUM_WEIGHTS),
+        .FILE(FILE_PATH)
+    ) parameters (
+        .clock(clock),
+        .address(weight_num),
+        .out(weight)
     );
 
 
@@ -43,9 +40,8 @@ module test_rom;
 
     initial begin
         #RESET_PERIOD;
-        enable_rom = 1;
-        for (int i = 0; i < NUM_ELEMENTS; i++) begin
-            element_num = i;
+        for (int i = 0; i < NUM_WEIGHTS; i++) begin
+            weight_num = i;
             #CLOCK_PERIOD;
         end
         $finish;
