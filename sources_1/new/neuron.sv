@@ -132,7 +132,7 @@ module neuron #(parameter
                         out <= sigmoid[sum[-1:-SUM_FRACTION_WIDTH]];
                     end
                 end default: begin
-                    $fatal("Invalid activation function %s", ACTIVATION.name());
+                    $error("Invalid activation function %s", ACTIVATION.name());
                 end
             endcase
         end else begin
