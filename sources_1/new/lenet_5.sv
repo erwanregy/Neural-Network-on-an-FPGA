@@ -3,12 +3,13 @@
 `include "include.svh"
 
 module lenet_5 #(parameter
-    int NUM_IMAGES = 10_000,
+    string IMAGES_FILE = "seven.mem",
+    int NUM_IMAGES = 1,
     int PIXEL_WIDTH = 9,
     int NUM_PIXELS = 784,
     int NUM_LAYERS = 4,
     layer_builder LAYERS[4] = '{
-        '{INPUT, 784, NONE},
+        '{INPUT, NUM_PIXELS, NONE},
         '{DENSE, 16, RELU},
         '{DENSE, 16, RELU},
         '{DENSE, 10, SIGMOID}
@@ -16,12 +17,13 @@ module lenet_5 #(parameter
 ) (
     input logic clock, reset, enable,
     output logic [$clog2(LAYERS[NUM_LAYERS-1].SIZE)-1:0] label,
+    output logic [$clog2(NUM_IMAGES)-1:0] label_num,
     output logic label_ready
 );
 
     // State machine outputs
     
-    logic reset_units, inputs_ready, classify, increment_image_num;
+    logic reset_units, inputs_ready, classify;
 
 
     // Images ROM
@@ -29,16 +31,16 @@ module lenet_5 #(parameter
     localparam int IMAGE_WIDTH = PIXEL_WIDTH * NUM_PIXELS;
     
     logic [$clog2(NUM_IMAGES)-1:0] image_num;
-    logic [IMAGE_WIDTH-1:0] image;
+    logic [0:NUM_PIXELS-1][PIXEL_WIDTH-1:0] image;
 
     rom #(
-        .WITDH(IMAGE_WIDTH),
+        .WIDTH(IMAGE_WIDTH),
         .DEPTH(NUM_IMAGES),
-        .FILE("test_images.mem")
+        .FILE(IMAGES_FILE)
     ) images (
         .clock(clock),
         .address(image_num),
-        .data(image)
+        .out(image)
     );
     
     
@@ -49,12 +51,14 @@ module lenet_5 #(parameter
             image_num <= 0;
         end else if (reset_units) begin
             image_num <= 0;
-        end else if (increment_image_num) begin
+        end else if (classify) begin
             image_num <= image_num + 1;
         end else begin
             image_num <= image_num;
         end
     end
+    
+    assign label_num = image_num - 1;
     
     
     // Neural Network
@@ -63,8 +67,10 @@ module lenet_5 #(parameter
     logic signed [INTEGER_WIDTH-1:-FRACTION_WIDTH] outputs[LAYERS[NUM_LAYERS-1].SIZE];
     logic outputs_ready;
     
-    for (genvar i = 0; i < IMAGE_WIDTH; i++) begin
-        assign inputs[i] = image[i:i + PIXEL_WIDTH];
+    always_comb begin
+        foreach (inputs[i]) begin
+            inputs[i] = image[i];
+        end
     end
     
     neural_network #(
@@ -136,8 +142,7 @@ module lenet_5 #(parameter
                 next_state = outputting;
             end outputting: begin
                 label_ready = 1;
-                if (image_num < NUM_IMAGES - 1) begin
-                    increment_image_num = 1;
+                if (image_num < NUM_IMAGES) begin
                     next_state = processing;
                 end else begin
                     next_state = idle;
