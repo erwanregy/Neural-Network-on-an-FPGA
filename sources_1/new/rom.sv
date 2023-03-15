@@ -1,29 +1,23 @@
 `timescale 1ns / 1ps
 
 module rom #(parameter
-    type T = logic signed [15:-16],
-    int NUM_ELEMENTS = 10,
-    string FILE_PATH = "rom.mem"
+    int WIDTH = 16,
+    int DEPTH = 10,
+    string FILE = "file.mem"
 ) (
-    input logic clock, reset, enable,
-    input logic [$clog2(NUM_ELEMENTS)-1:0] address,
-    output T out
+    input logic clock,
+    input logic [$clog2(DEPTH)-1:0] address,
+    output logic [WIDTH-1:0] out
 );
 
-    T elements [NUM_ELEMENTS];
+    logic [WIDTH-1:0] elements[DEPTH];
 
     initial begin
-        $readmemb(FILE_PATH, elements);
+        $readmemb(FILE, elements);
     end
 
-    always_ff @(posedge clock or posedge reset) begin
-        if (reset) begin
-            out <= 0;
-        end else if (enable) begin
-            out <= elements[address];
-        end else begin
-            out <= out;
-        end
+    always_ff @(posedge clock) begin
+        out <= elements[address];
     end
 
 endmodule
